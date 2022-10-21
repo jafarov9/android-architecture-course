@@ -1,12 +1,7 @@
 package com.techyourchance.mvc.screens.questionslist;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.View;
-import android.widget.AdapterView;
+import android.util.Log;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -18,6 +13,7 @@ import com.techyourchance.mvc.networking.StackoverflowApi;
 import com.techyourchance.mvc.questions.Question;
 import com.techyourchance.mvc.screens.common.BaseActivity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,13 +61,17 @@ public class QuestionsListActivity extends BaseActivity implements
                         if (response.isSuccessful()) {
                             bindQuestions(response.body().getQuestions());
                         } else {
-                            networkCallFailed();
+                            try {
+                                networkCallFailed(response.errorBody().string());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
 
                     @Override
                     public void onFailure(Call<QuestionsListResponseSchema> call, Throwable t) {
-                        networkCallFailed();
+                        networkCallFailed(t.getMessage());
                     }
                 } );
     }
@@ -86,8 +86,9 @@ public class QuestionsListActivity extends BaseActivity implements
         mQuestionsListAdapter.notifyDataSetChanged();
     }
 
-    private void networkCallFailed() {
-        Toast.makeText(this, R.string.error_network_call_failed, Toast.LENGTH_SHORT).show();
+    private void networkCallFailed(String string) {
+        Log.e("sdsdsdsds", string);
+        Toast.makeText(this, string, Toast.LENGTH_SHORT).show();
     }
 
     @Override
