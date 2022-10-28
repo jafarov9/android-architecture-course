@@ -1,5 +1,6 @@
 package com.techyourchance.mvc.screens.questionslist;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,47 +12,49 @@ import android.widget.TextView;
 
 import com.techyourchance.mvc.R;
 import com.techyourchance.mvc.questions.Question;
+import com.techyourchance.mvc.screens.common.ViewMvcFactory;
 
-public class QuestionsListAdapter extends ArrayAdapter<Question> {
+public class QuestionsListAdapter extends ArrayAdapter<Question> implements QuestionsListItemMvc.Listener {
 
     private final OnQuestionClickListener mOnQuestionClickListener;
+    private ViewMvcFactory viewMvcFactory;
 
     public interface OnQuestionClickListener {
         void onQuestionClicked(Question question);
     }
 
     public QuestionsListAdapter(Context context,
-                                OnQuestionClickListener onQuestionClickListener) {
+                                OnQuestionClickListener onQuestionClickListener, ViewMvcFactory viewMvcFactory) {
         super(context, 0);
         mOnQuestionClickListener = onQuestionClickListener;
+        this.viewMvcFactory = viewMvcFactory;
     }
 
+    @SuppressLint("CutPasteId")
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         if (convertView == null) {
-            convertView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.layout_question_list_item, parent, false);
+            QuestionsListItemMvc viewMvc = viewMvcFactory.getQuestionListItemViewMvc(parent);
+
+            viewMvc.registerListener(this);
+
+            convertView = viewMvc.getRootView();
+            convertView.setTag(viewMvc);
         }
 
         final Question question = getItem(position);
 
         // bind the data to views
-        TextView txtTitle = convertView.findViewById(R.id.txt_title);
-        txtTitle.setText(question.getTitle());
+        QuestionsListItemMvc viewMvc = (QuestionsListItemMvc) convertView.getTag();
 
-        // set listener
-        convertView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onQuestionClicked(question);
-            }
-        });
+        viewMvc.bindQuestion(question);
 
         return convertView;
     }
 
-    private void onQuestionClicked(Question question) {
+    @Override
+    public void onQuestionClicked(Question question) {
         mOnQuestionClickListener.onQuestionClicked(question);
     }
 }
